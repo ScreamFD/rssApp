@@ -1,5 +1,6 @@
 package de.lamber.sascha.rss;
 
+import android.content.Intent;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.widget.ArrayAdapter;
@@ -7,7 +8,7 @@ import android.widget.ListView;
 
 import java.util.ArrayList;
 
-public class MainActivity extends AppCompatActivity implements PostParserDelegate {
+public class MainActivity extends AppCompatActivity implements EventDispatcher.EventObserver{
 
     ListView articleList;
 
@@ -20,12 +21,25 @@ public class MainActivity extends AppCompatActivity implements PostParserDelegat
 
         articleList = (ListView) findViewById(R.id.articleList);
 
-        XMLProcessor processor = new XMLProcessor("http://blog.parse.com/feed/", this);
-        processor.execute();
+        startService(new Intent(this, RSSService.class));
     }
 
     @Override
-    public void xmlFeedParsed(ArrayList<Post> posts) {
+    protected void onStart() {
+        super.onStart();
+
+        EventDispatcher.addObserver(this);
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+
+        EventDispatcher.deleteObserver(this);
+    }
+
+    @Override
+    public void feedUpdated(ArrayList<Post> posts) {
 
         ArrayAdapter<Post> arrayAdapter = new ArrayAdapter<Post>(
                 MainActivity.this, android.R.layout.simple_list_item_1, posts);
